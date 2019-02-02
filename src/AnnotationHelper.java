@@ -1,5 +1,3 @@
-package dude.makiah;
-
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;

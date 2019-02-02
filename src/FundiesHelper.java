@@ -1,5 +1,3 @@
-package dude.makiah;
-
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
@@ -12,7 +10,6 @@ import java.io.File;
 /**
  Compile with this:
  C:\Documents and Settings\glow\My Documents\j>javac DumpMethods.java
-
  Run like this, and results follow
  C:\Documents and Settings\glow\My Documents\j>java DumpMethods
  public void DumpMethods.foo()

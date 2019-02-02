@@ -23,10 +23,10 @@ import java.io.File;
 
 public class FundiesHelper extends JPanel implements ActionListener
 {
-    JButton go;
+    private JButton go;
 
-    JFileChooser chooser;
-    String choosertitle;
+    private JFileChooser chooser;
+    private String choosertitle;
 
     public FundiesHelper()
     {

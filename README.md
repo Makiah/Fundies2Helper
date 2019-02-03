@@ -6,9 +6,10 @@ Auto-generates class templates via `java.lang.reflect.*` and some hacky methods.
 
 ## Usage
 
-1. Download the JAR from [here](https://github.com/Makiah/Fundies2Helper/releases/download/1.0/helper.jar).  
+1. Download the JAR from [here](https://github.com/Makiah/Fundies2Helper/releases/download/1.1/helper.jar).  
 2. Double click on the file to run it, which should result in a pop up.  
-2. Provide the GUI a .java file by clicking "Select new file to annotate".  
+3. (You might have to right click on the file and then open it if your computer says that it can't run code from unauthenticated developers)
+4. Provide the GUI a .java file by clicking "Select new file to annotate".  
 
 ## Before 
 ```

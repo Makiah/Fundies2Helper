@@ -69,7 +69,7 @@ public class AnnotationHelper
 
 		// Fields
 		currentAnnotation.append("Fields: \n");
-		for (Field f : c.getFields()) 
+		for (Field f : c.getDeclaredFields()) 
 			currentAnnotation.append(annotate(f) + "\n");
 
 		// Methods
@@ -79,7 +79,7 @@ public class AnnotationHelper
 
 		// Methods of fields
 		currentAnnotation.append("Methods of fields: \n");
-		for (Field f : c.getFields()) 
+		for (Field f : c.getDeclaredFields()) 
 		{
 			// don't annotate primitives or Strings
 			if (isPointlessToAnnotate(f.getType()))
@@ -93,35 +93,10 @@ public class AnnotationHelper
 		}
 
 		// Finalize current annotation
-		currentAnnotation.append("*/\n");
-		System.out.println(currentAnnotation.toString());
+		currentAnnotation.append("*/");
 		
 		// Add this annotation to the map
 		currentAnnotations.put(c.getName(), currentAnnotation.toString());
-		
-		// Get all branching classes and annotate them too since apparently we have to trace dependencies?  
-		for (Field f : c.getFields())
-		{
-			if (isPointlessToAnnotate(f.getType()))
-				continue;
-			currentAnnotations = generateAnnotations(f.getType(), currentAnnotations);
-		}
-		
-		for (Method m : c.getDeclaredMethods())
-		{
-			if (!isPointlessToAnnotate(m.getReturnType()))
-			{
-				currentAnnotations = generateAnnotations(m.getReturnType(), currentAnnotations);
-			}
-			for (Parameter p : m.getParameters())
-			{
-				if (!isPointlessToAnnotate(p.getType()))
-				{
-					currentAnnotations = generateAnnotations(p.getType(), currentAnnotations);
-				}
-			}
-		}
-		
 		return currentAnnotations;
     }
 
@@ -166,6 +141,7 @@ public class AnnotationHelper
 			{
 				Class<?> loadedClass = cl.loadClass(f.getName().substring(0, f.getName().length() - 6));
 				currentAnnotations = generateAnnotations(loadedClass, currentAnnotations);
+				f.delete();
 			}
         }
         catch (Exception exp)
@@ -179,6 +155,12 @@ public class AnnotationHelper
 		{
         	rebuiltMap.put(entry.getKey().substring(entry.getKey().lastIndexOf(".") + 1), entry.getValue());
 		}
+        
+        // Print map to user
+        for (Map.Entry<String, String> entry : rebuiltMap.entrySet()) 
+		{
+        	System.out.println("{\n" + entry.getKey() + ", \n" + entry.getValue() + "}\n");
+		}
 
 		// Now write the annotations to the file
         try 
@@ -189,39 +171,33 @@ public class AnnotationHelper
             List<String> lines = new ArrayList<String>();
             while ((line = br.readLine()) != null) 
             {
-            	// Ensure that this line is a class declaration
-            	int indexOfClassString = line.indexOf("class ");
-            	if (indexOfClassString == -1)
-            		continue;
+                lines.add(line);
             	
             	// Ensure that the name of the class is mentioned after the class declaration
             	Map.Entry<String, String> bestEntry = null;
             	int indexOfClassNameString = -1;
             	for (Map.Entry<String, String> entry : currentAnnotations.entrySet()) 
         		{
-            		indexOfClassNameString = line.indexOf(" " + entry.getKey());
+            		indexOfClassNameString = Math.max(line.indexOf("class " + entry.getKey()), 
+            				line.indexOf("interface " + entry.getKey()));
             		if (indexOfClassNameString != -1)
             		{
             			bestEntry = entry;
             			break;
             		}
         		}
-            	if (indexOfClassNameString == -1)
-            		continue;
             	
-            	// And neither are -1
-            	if (indexOfClassString < indexOfClassNameString)
-            		lines.add(bestEntry.getValue());
-                
-                lines.add(line);
+            	// Finally add annotation
+            	if (bestEntry != null)
+            		lines.add(lines.size() - 1, bestEntry.getValue());
             }
             fr.close();
             br.close();
-
-            FileWriter fw = new FileWriter(javaFile);
+            
+            FileWriter fw = new FileWriter(new File(javaFile.getAbsolutePath().replace(".java", "-annotated.java")));
             BufferedWriter out = new BufferedWriter(fw);
             for(String s : lines)
-                 out.write(s);
+                 out.write(s + "\n");
             out.flush();
             out.close();
         }

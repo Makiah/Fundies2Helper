@@ -86,7 +86,7 @@ public class AnnotationHelper
 				continue; 
 
 			// get all methods
-			for (Method m : c.getDeclaredMethods()) 
+			for (Method m : f.getType().getDeclaredMethods()) 
 			{
 				currentAnnotation.append(annotate(m, f.getName() + ".") + "\n");
 			}

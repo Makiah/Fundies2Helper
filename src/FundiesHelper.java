@@ -7,17 +7,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 
-/**
- Compile with this:
- C:\Documents and Settings\glow\My Documents\j>javac DumpMethods.java
- Run like this, and results follow
- C:\Documents and Settings\glow\My Documents\j>java DumpMethods
- public void DumpMethods.foo()
- public int DumpMethods.bar()
- public java.lang.String DumpMethods.baz()
- public static void DumpMethods.main(java.lang.String[])
- */
-
 public class FundiesHelper extends JPanel implements ActionListener
 {
     private JButton go;
@@ -56,22 +45,6 @@ public class FundiesHelper extends JPanel implements ActionListener
                     return true;
                 } else {
                     return f.getName().toLowerCase().endsWith(".java");
-                }
-            }
-        });
-
-        // Add choosable file filter for class files
-        chooser.addChoosableFileFilter(new FileFilter() {
-
-            public String getDescription() {
-                return "Class Files (*.class)";
-            }
-
-            public boolean accept(File f) {
-                if (f.isDirectory()) {
-                    return true;
-                } else {
-                    return f.getName().toLowerCase().endsWith(".class");
                 }
             }
         });

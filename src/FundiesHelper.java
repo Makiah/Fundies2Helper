@@ -11,83 +11,82 @@ public class FundiesHelper extends JPanel implements ActionListener
 {
 	private final JButton go;
 	private final JCheckBox includeMethodAnnotations;
-	
-    public FundiesHelper()
-    {
-        // Add file selection button
-    	go = new JButton("Select new file to annotate");
-        go.addActionListener(this);
-        add(go);
-        
-        // Add checkbox for whether or not we should include method annotations
-        includeMethodAnnotations = new JCheckBox("Include Method Annotations");
-        add(includeMethodAnnotations);
-    }
 
-    public void actionPerformed(ActionEvent e)
-    {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setDialogTitle("Select file to be annotated");
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+	public FundiesHelper()
+	{
+		// Add file selection button
+		go = new JButton("Select new file to annotate");
+		go.addActionListener(this);
+		add(go);
 
-        // Disable "All Files" option
-        chooser.setAcceptAllFileFilterUsed(false);
+		// Add checkbox for whether or not we should include method annotations
+		includeMethodAnnotations = new JCheckBox("Include Method Annotations");
+		add(includeMethodAnnotations);
+	}
 
-        // Java files have to be compiled but are accepted
-        chooser.addChoosableFileFilter(new FileFilter() 
-        {
-            public String getDescription() 
-            {
-                return "Java Files (*.java)";
-            }
+	public void actionPerformed(ActionEvent e)
+	{
+		JFileChooser chooser = new JFileChooser();
+		chooser.setCurrentDirectory(new java.io.File("."));
+		chooser.setDialogTitle("Select file to be annotated");
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-            public boolean accept(File f) 
-            {
-                if (f.isDirectory()) {
-                    return true;
-                } else {
-                    return f.getName().toLowerCase().endsWith(".java");
-                }
-            }
-        });
+		// Disable "All Files" option
+		chooser.setAcceptAllFileFilterUsed(false);
 
-        // Show the open dialog
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
-        {
-            System.out.println("getCurrentDirectory(): "
-                    +  chooser.getCurrentDirectory());
-            System.out.println("getSelectedFile() : "
-                    +  chooser.getSelectedFile());
+		// Java files have to be compiled but are accepted
+		chooser.addChoosableFileFilter(new FileFilter()
+		{
+			public String getDescription()
+			{
+				return "Java Files (*.java)";
+			}
 
-            // Annotate the file
-            System.out.println("Including annotations: " + includeMethodAnnotations.isSelected());
-            new AnnotationHelper(chooser.getSelectedFile(), includeMethodAnnotations.isSelected()).annotateJavaFile();
-        }
-        else
-        {
-            System.out.println("No Selection ");
-        }
-    }
+			public boolean accept(File f)
+			{
+				if (f.isDirectory())
+				{
+					return true;
+				} else
+				{
+					return f.getName().toLowerCase().endsWith(".java");
+				}
+			}
+		});
 
-    public Dimension getPreferredSize()
-    {
-        return new Dimension(500, 75);
-    }
+		// Show the open dialog
+		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
+		{
+			System.out.println("getCurrentDirectory(): " + chooser.getCurrentDirectory());
+			System.out.println("getSelectedFile() : " + chooser.getSelectedFile());
 
-    public static void main(String[] args)
-    {
-        JFrame frame = new JFrame("");
-        FundiesHelper panel = new FundiesHelper();
-        frame.addWindowListener(
-            new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    System.exit(0);
-                }
-            }
-        );
-        frame.getContentPane().add(panel, "Center");
-        frame.setSize(panel.getPreferredSize());
-        frame.setVisible(true);
-    }
+			// Annotate the file
+			System.out.println("Including annotations: " + includeMethodAnnotations.isSelected());
+			new AnnotationHelper(chooser.getSelectedFile(), includeMethodAnnotations.isSelected()).annotateJavaFile();
+		} else
+		{
+			System.out.println("No Selection ");
+		}
+	}
+
+	public Dimension getPreferredSize()
+	{
+		return new Dimension(500, 75);
+	}
+
+	public static void main(String[] args)
+	{
+		JFrame frame = new JFrame("");
+		FundiesHelper panel = new FundiesHelper();
+		frame.addWindowListener(new WindowAdapter()
+		{
+			public void windowClosing(WindowEvent e)
+			{
+				System.exit(0);
+			}
+		});
+		frame.getContentPane().add(panel, "Center");
+		frame.setSize(panel.getPreferredSize());
+		frame.setVisible(true);
+	}
 }

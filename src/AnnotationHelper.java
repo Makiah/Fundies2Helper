@@ -100,12 +100,27 @@ public class AnnotationHelper
 	 */
 	private String annotateClassMethod(CtMethod m) throws NotFoundException
 	{
-		StringBuilder currentAnnotation = new StringBuilder("  // In " + m.getName() + "() \n");
-		currentAnnotation.append("/*\nParameters: \n");
+		StringBuilder currentAnnotation = new StringBuilder("// In " + m.getName() + "() \n");
+		currentAnnotation.append("/* TEMPLATE\nFields: \n");
 		for (CtClass p : m.getParameterTypes())
 			currentAnnotation.append("... " + p.getSimpleName() + " ... \n");
 
-		currentAnnotation.append("Returns " + m.getReturnType().getSimpleName() + "\n");
+		currentAnnotation.append("Returns: \n... " + m.getReturnType().getSimpleName() + " ...\n");
+		
+		currentAnnotation.append("Methods of fields: \n");
+		for (CtClass c : m.getParameterTypes())
+		{
+			// don't annotate primitives or Strings
+			if (isPointlessToAnnotate(c))
+				continue;
+
+			// get all methods
+			for (CtMethod m2 : c.getDeclaredMethods())
+			{
+				currentAnnotation.append(annotate(m2, c.getName() + ".") + "\n");
+			}
+		}
+		
 		currentAnnotation.append("*/");
 		return currentAnnotation.toString();
 	}
@@ -133,16 +148,11 @@ public class AnnotationHelper
 			}
 		}
 
-		// Verify that this class has a constructor otherwise can't annotate
-		int classLineNumber = getClassLineNumber(c);
-		if (classLineNumber < 0)
-			return currentAnnotations;
-
 		// Begin the process
 		System.out.println("Generating annotations for " + c.getName());
 
 		// Build and apply annotations
-		StringBuilder currentAnnotation = new StringBuilder("  // In " + c.getName() + "\n" + "/* TEMPLATE: \n");
+		StringBuilder currentAnnotation = new StringBuilder("// In " + c.getName() + "\n" + "/* TEMPLATE: \n");
 
 		// Fields
 		currentAnnotation.append("Fields: \n");
@@ -170,10 +180,11 @@ public class AnnotationHelper
 				String methodAnnotation = annotateClassMethod(m);
 
 				// Indent
-				methodAnnotation.replace("\n", "\n  ");
+				methodAnnotation = "    " + methodAnnotation;
+				methodAnnotation = methodAnnotation.replace("\n", "\n    ");
 
 				// Add to map
-				currentAnnotations.put(m.getMethodInfo().getLineNumber(0), methodAnnotation);
+				currentAnnotations.put(m.getMethodInfo().getLineNumber(0) - 1, methodAnnotation);
 				break;
 			}
 		}
@@ -197,10 +208,12 @@ public class AnnotationHelper
 		currentAnnotation.append("*/");
 
 		// Add indentation
-		String finalAnnotation = currentAnnotation.toString().replace("\n", "\n  ");
+		String finalAnnotation = ("    " + currentAnnotation.toString()).replace("\n", "\n    ");
 
 		// Add this annotation to the map
-		currentAnnotations.put(classLineNumber, finalAnnotation);
+		int classLineNumber = getClassLineNumber(c);
+		if (classLineNumber >= 0)
+			currentAnnotations.put(classLineNumber, finalAnnotation);
 		return currentAnnotations;
 	}
 
@@ -287,7 +300,11 @@ public class AnnotationHelper
 			int currentOffset = 0;
 			for (Map.Entry<Integer, String> entry : currentAnnotations.entrySet())
 			{
-				lines.add(entry.getKey() + currentOffset - 1, entry.getValue());
+				int insertIndex = entry.getKey() + currentOffset;
+				if (insertIndex < 0) // shouldn't happen
+					continue;
+				
+				lines.add(insertIndex, entry.getValue());
 				currentOffset++;
 			}
 

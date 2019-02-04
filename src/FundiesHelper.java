@@ -9,38 +9,41 @@ import java.io.File;
 
 public class FundiesHelper extends JPanel implements ActionListener
 {
-    private JButton go;
-
-    private JFileChooser chooser;
-    private String choosertitle;
-
+	private final JButton go;
+	private final JCheckBox includeMethodAnnotations;
+	
     public FundiesHelper()
     {
-        go = new JButton("Select new file to annotate");
+        // Add file selection button
+    	go = new JButton("Select new file to annotate");
         go.addActionListener(this);
         add(go);
+        
+        // Add checkbox for whether or not we should include method annotations
+        includeMethodAnnotations = new JCheckBox("Include Method Annotations");
+        add(includeMethodAnnotations);
     }
 
     public void actionPerformed(ActionEvent e)
     {
-        chooser = new JFileChooser();
+        JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setDialogTitle(choosertitle);
+        chooser.setDialogTitle("Select file to be annotated");
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-        //
-        // disable the "All files" option.
-        //
+        // Disable "All Files" option
         chooser.setAcceptAllFileFilterUsed(false);
 
         // Java files have to be compiled but are accepted
-        chooser.addChoosableFileFilter(new FileFilter() {
-
-            public String getDescription() {
+        chooser.addChoosableFileFilter(new FileFilter() 
+        {
+            public String getDescription() 
+            {
                 return "Java Files (*.java)";
             }
 
-            public boolean accept(File f) {
+            public boolean accept(File f) 
+            {
                 if (f.isDirectory()) {
                     return true;
                 } else {
@@ -58,7 +61,8 @@ public class FundiesHelper extends JPanel implements ActionListener
                     +  chooser.getSelectedFile());
 
             // Annotate the file
-            new AnnotationHelper(chooser.getSelectedFile()).annotateClass();
+            System.out.println("Including annotations: " + includeMethodAnnotations.isSelected());
+            new AnnotationHelper(chooser.getSelectedFile()).annotateClass(includeMethodAnnotations.isSelected());
         }
         else
         {
@@ -82,7 +86,7 @@ public class FundiesHelper extends JPanel implements ActionListener
                 }
             }
         );
-        frame.getContentPane().add(panel,"Center");
+        frame.getContentPane().add(panel, "Center");
         frame.setSize(panel.getPreferredSize());
         frame.setVisible(true);
     }

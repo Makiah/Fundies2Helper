@@ -1,5 +1,12 @@
 import javax.tools.*;
 
+import javassist.ClassPool;
+import javassist.LoaderClassPath;
+import javassist.NotFoundException;
+import javassist.CtClass;
+import javassist.CtField;
+import javassist.CtMethod;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,8 +20,8 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.List;
 
 public class AnnotationHelper
@@ -26,6 +33,28 @@ public class AnnotationHelper
     	this.javaFile = javaFile;
     }
     
+    /**
+     * Get line number of the current class.  
+     * @param c the CtClass to get the line number of
+     * @return the line number
+     */
+    private int getClassLineNumber(CtClass c)
+    {
+    	try {
+    		return c.getConstructors()[0].getMethodInfo().getLineNumber(0);
+    	}
+    	catch (Exception e)
+    	{
+    		System.out.println("Couldn't find constructor for " + c.getName() + " so ignoring template");
+    		return -1;
+    	}
+    }
+    
+    /**
+     * Whether this class is useless to annotate.  
+     * @param c the class in question
+     * @return whether it's pointless
+     */
     private boolean isPointlessToAnnotate(Class<?> c)
     {
     	return c.isPrimitive() || c.isAssignableFrom(String.class) || 
@@ -33,33 +62,50 @@ public class AnnotationHelper
     			c.getName().startsWith("javalib.");
     }
     
-    private String annotate(Field f)
+    /**
+     * Annotates a provided field 
+     * @param f
+     * @return
+     */
+    private String annotate(CtField f) throws NotFoundException
     {
 		return "... this." + f.getName() + " ...  --" + f.getType().getSimpleName();
     }
     
-    private String annotate(Method m, String prefix)
+    /**
+     * Annotates a provided method with a given prefix.  
+     * @param m
+     * @param prefix
+     * @return
+     */
+    private String annotate(CtMethod m, String prefix) throws NotFoundException
     {
 		StringBuilder currentAnnotation = new StringBuilder("... this." + prefix + m.getName() + "(");
-		for (Parameter p : m.getParameters())
-			currentAnnotation.append(p.getType().getSimpleName() + " ");
-		if (m.getParameterCount() > 0)
+		for (CtClass p : m.getParameterTypes())
+			currentAnnotation.append(p.getSimpleName() + " ");
+		if (m.getParameterTypes().length > 0)
 			currentAnnotation.setLength(currentAnnotation.length() - 1);
 		currentAnnotation.append(") ...  --" + m.getReturnType().getSimpleName());
 		return currentAnnotation.toString();
     }
     
-    private Map<String, String> generateAnnotations(Class<?> c, Map<String, String> currentAnnotations) 
+    private Map<Integer, String> generateAnnotations(CtClass c, Map<Integer, String> currentAnnotations) throws NotFoundException
     {
-    	// Verify that this hasn't already been generated
-    	for (Map.Entry<String, String> entry : currentAnnotations.entrySet()) 
+    	// Verify that this hasn't already been generated, return what already exists in the map if so.  
+    	for (Map.Entry<Integer, String> entry : currentAnnotations.entrySet()) 
 		{
-			if (c.getName().equals(entry.getKey()))
+			if (getClassLineNumber(c) == entry.getKey())
 			{
 				return currentAnnotations;
 			}
 		}
     	
+    	// Verify that this class has a constructor otherwise can't annotate
+    	int classLineNumber = getClassLineNumber(c);
+    	if (classLineNumber < 0)
+    		return currentAnnotations;
+    	
+    	// Begin the process
     	System.out.println("Generating annotations for " + c.getName());
     	
     	// Build and apply annotations
@@ -69,24 +115,29 @@ public class AnnotationHelper
 
 		// Fields
 		currentAnnotation.append("Fields: \n");
-		for (Field f : c.getDeclaredFields()) 
+		for (CtField f : c.getDeclaredFields()) 
 			currentAnnotation.append(annotate(f) + "\n");
 
 		// Methods
 		currentAnnotation.append("Methods: \n");
-		for (Method m : c.getDeclaredMethods()) 
+		for (CtMethod m : c.getDeclaredMethods()) 
+		{
 			currentAnnotation.append(annotate(m, "") + "\n");
+			
+			// Determine whether this method has complex data, indicating it needs to be annotated in of itself.  
+			
+		}
 
 		// Methods of fields
 		currentAnnotation.append("Methods of fields: \n");
-		for (Field f : c.getDeclaredFields()) 
+		for (CtField f : c.getDeclaredFields()) 
 		{
 			// don't annotate primitives or Strings
-			if (isPointlessToAnnotate(f.getType()))
+			if (isPointlessToAnnotate(f.getClass()))
 				continue; 
 
 			// get all methods
-			for (Method m : f.getType().getDeclaredMethods()) 
+			for (CtMethod m : f.getType().getDeclaredMethods()) 
 			{
 				currentAnnotation.append(annotate(m, f.getName() + ".") + "\n");
 			}
@@ -96,15 +147,15 @@ public class AnnotationHelper
 		currentAnnotation.append("*/");
 		
 		// Add this annotation to the map
-		currentAnnotations.put(c.getName(), currentAnnotation.toString());
+		currentAnnotations.put(classLineNumber, currentAnnotation.toString());
 		return currentAnnotations;
     }
 
-    public void annotateClass()
+    public void annotateClass(boolean includeMethodAnnotations)
     {
-		Map<String, String> currentAnnotations = new HashMap<String, String>();
+		Map<Integer, String> currentAnnotations = new TreeMap<Integer, String>(); // treemap for sorting
 
-        /// Compile file and generate annotations
+        /// Compile file for class names and generate annotations
         try
         {
         	// Compile file
@@ -139,8 +190,12 @@ public class AnnotationHelper
 			// For each class file load the class and obtain annotations
 			for (File f : classFiles)
 			{
-				Class<?> loadedClass = cl.loadClass(f.getName().substring(0, f.getName().length() - 6));
-				currentAnnotations = generateAnnotations(loadedClass, currentAnnotations);
+	            ClassPool classPool = ClassPool.getDefault();
+	            classPool.appendClassPath(new LoaderClassPath(cl));
+	            currentAnnotations = generateAnnotations(
+	            		classPool.getCtClass(f.getName().substring(0, f.getName().length() - 6)), currentAnnotations);
+	            
+	            // Compiled file no longer necessary
 				f.delete();
 			}
         }
@@ -149,15 +204,8 @@ public class AnnotationHelper
             exp.printStackTrace();
         }
         
-        // Rebuild the map using the simple names
-        Map<String, String> rebuiltMap = new HashMap<String, String>();
-        for (Map.Entry<String, String> entry : currentAnnotations.entrySet()) 
-		{
-        	rebuiltMap.put(entry.getKey().substring(entry.getKey().lastIndexOf(".") + 1), entry.getValue());
-		}
-        
         // Print map to user
-        for (Map.Entry<String, String> entry : rebuiltMap.entrySet()) 
+        for (Map.Entry<Integer, String> entry : currentAnnotations.entrySet()) 
 		{
         	System.out.println("{\n" + entry.getKey() + ", \n" + entry.getValue() + "}\n");
 		}
@@ -165,6 +213,7 @@ public class AnnotationHelper
 		// Now write the annotations to the file
         try 
         {
+        	// Read the file lines
             FileReader fr = new FileReader(javaFile);
             BufferedReader br = new BufferedReader(fr);
             String line = null;
@@ -172,28 +221,19 @@ public class AnnotationHelper
             while ((line = br.readLine()) != null) 
             {
                 lines.add(line);
-            	
-            	// Ensure that the name of the class is mentioned after the class declaration
-            	Map.Entry<String, String> bestEntry = null;
-            	int indexOfClassNameString = -1;
-            	for (Map.Entry<String, String> entry : currentAnnotations.entrySet()) 
-        		{
-            		indexOfClassNameString = Math.max(line.indexOf("class " + entry.getKey()), 
-            				line.indexOf("interface " + entry.getKey()));
-            		if (indexOfClassNameString != -1)
-            		{
-            			bestEntry = entry;
-            			break;
-            		}
-        		}
-            	
-            	// Finally add annotation
-            	if (bestEntry != null)
-            		lines.add(lines.size() - 1, bestEntry.getValue());
             }
             fr.close();
             br.close();
             
+            // Add all current annotations by line number
+            int currentOffset = 0;
+            for (Map.Entry<Integer, String> entry : currentAnnotations.entrySet()) 
+    		{
+            	lines.add(entry.getKey() + currentOffset, entry.getValue());
+            	currentOffset++;
+    		}
+            
+            // Write the file out
             FileWriter fw = new FileWriter(new File(javaFile.getAbsolutePath().replace(".java", "-annotated.java")));
             BufferedWriter out = new BufferedWriter(fw);
             for(String s : lines)

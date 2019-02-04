@@ -2,7 +2,7 @@
 
 Auto-generates class, interface, and method templates via `javassist`.  
 
-<img width="700px" src="screenshot.png"></img>
+<img width="700px" src="screenshot2.png"></img>
 
 ## Usage
 

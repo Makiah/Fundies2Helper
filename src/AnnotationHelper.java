@@ -171,11 +171,18 @@ public class AnnotationHelper
 
 			// Determine whether this method has complex data, indicating it needs to be
 			// annotated in of itself.
+			boolean shouldAnnotate = false;
 			for (CtClass methodParam : m.getParameterTypes())
 			{
 				if (isPointlessToAnnotate(methodParam))
 					continue;
-
+				
+				shouldAnnotate = true;
+				break;
+			}
+			shouldAnnotate = shouldAnnotate || !isPointlessToAnnotate(m.getReturnType());
+			if (shouldAnnotate)
+			{
 				// Annotate
 				String methodAnnotation = annotateClassMethod(m);
 
@@ -185,7 +192,6 @@ public class AnnotationHelper
 
 				// Add to map
 				currentAnnotations.put(m.getMethodInfo().getLineNumber(0) - 1, methodAnnotation);
-				break;
 			}
 		}
 

@@ -62,7 +62,7 @@ public class FundiesHelper extends JPanel implements ActionListener
 
             // Annotate the file
             System.out.println("Including annotations: " + includeMethodAnnotations.isSelected());
-            new AnnotationHelper(chooser.getSelectedFile()).annotateClass(includeMethodAnnotations.isSelected());
+            new AnnotationHelper(chooser.getSelectedFile(), includeMethodAnnotations.isSelected()).annotateJavaFile();
         }
         else
         {

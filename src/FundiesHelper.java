@@ -10,7 +10,7 @@ import java.io.File;
 public class FundiesHelper extends JPanel implements ActionListener
 {
 	private final JButton go;
-	private final JCheckBox includeMethodAnnotations;
+	private final JCheckBox includeMethodAnnotations, modifyInline;
 
 	public FundiesHelper()
 	{
@@ -22,6 +22,10 @@ public class FundiesHelper extends JPanel implements ActionListener
 		// Add checkbox for whether or not we should include method annotations
 		includeMethodAnnotations = new JCheckBox("Include Method Annotations");
 		add(includeMethodAnnotations);
+		
+		// Add checkbox for whether or not we should include method annotations
+		modifyInline = new JCheckBox("Modify Inline");
+		add(modifyInline);
 	}
 
 	public void actionPerformed(ActionEvent e)
@@ -62,7 +66,8 @@ public class FundiesHelper extends JPanel implements ActionListener
 
 			// Annotate the file
 			System.out.println("Including annotations: " + includeMethodAnnotations.isSelected());
-			new AnnotationHelper(chooser.getSelectedFile(), includeMethodAnnotations.isSelected()).annotateJavaFile();
+			new AnnotationHelper(chooser.getSelectedFile(), includeMethodAnnotations.isSelected(), modifyInline.isSelected())
+			.annotateJavaFile();
 		} else
 		{
 			System.out.println("No Selection ");
@@ -71,7 +76,7 @@ public class FundiesHelper extends JPanel implements ActionListener
 
 	public Dimension getPreferredSize()
 	{
-		return new Dimension(500, 75);
+		return new Dimension(400, 100);
 	}
 
 	public static void main(String[] args)

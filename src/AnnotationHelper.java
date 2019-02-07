@@ -24,12 +24,13 @@ import java.util.List;
 public class AnnotationHelper
 {
 	private final File javaFile;
-	private final boolean annotateMethods;
+	private final boolean annotateMethods, modifyInline;
 
-	public AnnotationHelper(File javaFile, boolean annotateMethods)
+	public AnnotationHelper(File javaFile, boolean annotateMethods, boolean modifyInline)
 	{
 		this.javaFile = javaFile;
 		this.annotateMethods = annotateMethods;
+		this.modifyInline = modifyInline;
 	}
 
 	/**
@@ -315,7 +316,12 @@ public class AnnotationHelper
 			}
 
 			// Write the file out
-			FileWriter fw = new FileWriter(new File(javaFile.getAbsolutePath().replace(".java", "-annotated.java")));
+			File outFile;
+			if (modifyInline)
+				outFile = javaFile;
+			else
+				outFile = new File(javaFile.getAbsolutePath().replace(".java", "-annotated.java"));
+			FileWriter fw = new FileWriter(outFile);
 			BufferedWriter out = new BufferedWriter(fw);
 			for (String s : lines)
 				out.write(s + "\n");

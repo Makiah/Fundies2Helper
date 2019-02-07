@@ -7,9 +7,9 @@ Auto-generates class, interface, and method templates via `javassist`.
 ## Usage
 
 1. Download the JAR from [here](https://github.com/Makiah/Fundies2Helper/releases/download/1.2/helper.jar).  
-2. Double click on the file to run it, which should result in a pop up.  
-3. (You might have to right click on the file and then open it if your computer says that it can't run code from unauthenticated developers)
-4. Provide the GUI a .java file by clicking "Select new file to annotate".  
+2. Open up Command Prompt or Terminal (depending on your OS) and `cd` to the correct directory.  
+3. Type `java -jar helper.jar`
+4. Provide the GUI a .java file by clicking "Select new file to annotate", and optionally select different options.  
 
 ## Before 
 ```
